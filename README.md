@@ -43,6 +43,8 @@ YouTube link ──► server ──► Basic Pitch ──► arranger ──►
 - **Tap or click the on-screen keys** to play without a mic. Correct keys stay
   down until the step is complete, so chords can be tapped one key at a time;
   a wrong key flashes red.
+- **Play it for me** plays the current level at the song's tempo, from the
+  current step, lighting the keys and moving the dial as it goes.
 - **🔊 Hear it** plays the current notes, and a built-in demo song lets you
   try practice mode straight away.
 

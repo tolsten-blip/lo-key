@@ -391,6 +391,11 @@ button.link {
   mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
 }
 
+.ruler.live {
+  /* Following the music frame by frame; easing would make it lag. */
+  transition: none;
+}
+
 .ruler {
   position: absolute;
   top: 14px;
@@ -423,14 +428,41 @@ button.link {
 }
 
 .progress-line {
-  margin: 0 0 16px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0 0 18px;
   color: var(--muted);
   font-size: 0.9rem;
 }
 
-.progress-line .link {
-  margin-left: 12px;
+.play-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px 9px 14px;
+  color: var(--ink);
+}
+
+.play-button svg {
+  width: 18px;
+  height: 18px;
+  fill: var(--gold);
+}
+
+.play-button .icon-stop,
+.play-button[aria-pressed="true"] .icon-play {
+  display: none;
+}
+
+.play-button[aria-pressed="true"] .icon-stop {
+  display: inline;
+}
+
+.play-button[aria-pressed="true"] {
+  box-shadow: var(--inset);
 }
 
 #progress {

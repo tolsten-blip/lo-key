@@ -5,7 +5,7 @@ import { Keyboard } from "./keyboard";
 import { MicListener, MidiListener, type NoteSource } from "./listener";
 import { buildSteps, noteName } from "./music";
 import { Practice } from "./practice";
-import { playNotes } from "./synth";
+import { Playback, playNotes } from "./synth";
 import type { Hand, Lesson, Level } from "./types";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -110,6 +110,7 @@ const PX_PER_BEAT = 14; // tuning-dial scale
 let levelIndex = 0;
 
 function openLesson(l: Lesson) {
+  stopPlayback();
   lesson = l;
   $("lesson").hidden = false;
   $("lesson-title").textContent = l.title;
@@ -149,6 +150,7 @@ function selectLevel(index: number) {
   $("level-name").textContent = level.name;
   $("level-desc").textContent = level.description;
 
+  stopPlayback();
   tapped.clear();
   practice = new Practice(buildSteps(level.notes));
   practice.framesRequired = source instanceof MicListener ? 3 : 1;
@@ -167,6 +169,12 @@ $("knob").addEventListener("keydown", (e) => {
   selectLevel(Math.min(Math.max(levelIndex + delta, 0), lesson.levels.length - 1));
 });
 
+function moveDial(time: number) {
+  if (lesson) $("ruler").style.transform = `translateX(${(-time * lesson.bpm * PX_PER_BEAT) / 60}px)`;
+}
+
+const chordAt = (time: number) => lesson?.chords.find((c) => c.start <= time + 0.01 && time < c.end);
+
 /** The tuning dial: one tick per beat, a numbered tick at the start of each bar. */
 function buildRuler(l: Lesson) {
   const ruler = $("ruler");
@@ -184,7 +192,7 @@ function buildRuler(l: Lesson) {
 }
 
 function render() {
-  if (!practice || !lesson) return;
+  if (!practice || !lesson || playback.playing) return;
   const step = practice.current;
   const now = new Map<number, Hand>(step?.notes.map((n) => [n.pitch, n.hand]) ?? []);
   const next = new Set(practice.next?.notes.map((n) => n.pitch) ?? []);
@@ -192,16 +200,14 @@ function render() {
 
   const total = practice.steps.length;
   $("progress").textContent = `${Math.min(practice.index + 1, total)} / ${total}`;
-  const time = step?.time ?? lesson.duration;
-  $("ruler").style.transform = `translateX(${(-time * lesson.bpm * PX_PER_BEAT) / 60}px)`;
+  moveDial(step?.time ?? lesson.duration);
 
   if (practice.done) {
     $("chord").textContent = "Done!";
     $("play-names").textContent = "You played the whole song.";
     return;
   }
-  const chord = step && lesson.chords.find((c) => c.start <= step.time + 0.01 && step.time < c.end);
-  $("chord").textContent = chord?.name ?? "–";
+  $("chord").textContent = (step && chordAt(step.time)?.name) ?? "–";
   $("play-names").textContent = "Play " + [...now.keys()].sort((a, b) => a - b).map(noteName).join(" ");
 }
 
@@ -212,7 +218,7 @@ function onHeard(frame: Map<number, number>) {
 
 /** Combine what the mic/MIDI hears with on-screen taps, and let practice react. */
 function feed() {
-  if (!practice) return;
+  if (!practice || playback.playing) return;
   const frame = new Map(sourceFrame);
   for (const pitch of tapped) frame.set(pitch, 40);
   heard = new Set(frame.keys());
@@ -236,7 +242,7 @@ function onKeyPress(midi: number) {
   playNotes([midi], Number($<HTMLInputElement>("volume").value), 0.8);
 
   const step = practice?.current;
-  if (!step) return;
+  if (!step || playback.playing) return;
   if (!step.notes.some((n) => n.pitch === midi)) {
     keyboard.flash(midi, "wrong");
     return;
@@ -273,6 +279,7 @@ $("mic").addEventListener("click", async () => {
     const mic = new MicListener(() => practice?.watchedPitches() ?? [], onHeard);
     await mic.start();
     source = mic;
+    if (playback.playing) mic.mute(MUTED_FOR_PLAYBACK);
     if (practice) practice.framesRequired = 3;
     setSwitch("mic", "Listening. Play the highlighted keys.");
   } catch {
@@ -297,6 +304,46 @@ $("midi").addEventListener("click", async () => {
   }
 });
 
+// ---- Play-through: hear the part before playing it -------------------------
+
+const MUTED_FOR_PLAYBACK = 24 * 60 * 60 * 1000; // until stopPlayback() unmutes
+
+const playback = new Playback(
+  (time, sounding) => {
+    keyboard.update({ now: new Map(sounding.map((n) => [n.pitch, n.hand])), next: new Set(), heard: new Set() });
+    moveDial(time);
+    $("chord").textContent = chordAt(time)?.name ?? "–";
+    $("play-names").textContent = "Listen…";
+  },
+  () => stopPlayback(),
+);
+
+function stopPlayback() {
+  if (!$("ruler").classList.contains("live")) return;
+  playback.stop();
+  $("ruler").classList.remove("live");
+  $("play").setAttribute("aria-pressed", "false");
+  $("play-label").textContent = "Play it for me";
+  if (source instanceof MicListener) source.mute(0);
+  render();
+}
+
+$("play").addEventListener("click", () => {
+  if (playback.playing) return stopPlayback();
+  if (!practice || !lesson) return;
+  // From the current step, or from the top once the song's finished.
+  if (practice.done) practice.restart();
+  tapped.clear();
+  const level = lesson.levels[levelIndex];
+  // Keep the mic from hearing the app play and counting it as the student.
+  if (source instanceof MicListener) source.mute(MUTED_FOR_PLAYBACK);
+  $("ruler").classList.add("live");
+  $("play").setAttribute("aria-pressed", "true");
+  $("play-label").textContent = "Stop";
+  playback.start(level.notes, practice.current?.time ?? 0, Number($<HTMLInputElement>("volume").value));
+  if (!playback.playing) stopPlayback(); // nothing left to play
+});
+
 // ---- Other controls --------------------------------------------------------
 
 $("hint").addEventListener("click", () => {
@@ -310,22 +357,28 @@ $("hint").addEventListener("click", () => {
 // Fill the fader below its thumb (Firefox does this natively).
 const volume = $<HTMLInputElement>("volume");
 const paintVolume = () => volume.style.setProperty("--fill", `${Number(volume.value) * 100}%`);
-volume.addEventListener("input", paintVolume);
+volume.addEventListener("input", () => {
+  paintVolume();
+  playback.setVolume(Number(volume.value));
+});
 paintVolume();
 
 $("skip").addEventListener("click", () => {
+  stopPlayback();
   tapped.clear();
   practice?.advance();
   render();
 });
 
 $("back").addEventListener("click", () => {
+  stopPlayback();
   tapped.clear();
   practice?.back();
   render();
 });
 
 $("restart").addEventListener("click", () => {
+  stopPlayback();
   tapped.clear();
   practice?.restart();
   render();
