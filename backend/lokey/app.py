@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 import tempfile
 import threading
@@ -13,6 +14,7 @@ from pathlib import Path
 from typing import Callable
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import youtube
@@ -154,3 +156,10 @@ def get_job(job_id: str) -> dict:
     if job is None:
         raise HTTPException(status_code=404, detail="No such job.")
     return job.to_dict()
+
+
+# In the Docker image the built web app is served from here too, so the whole
+# thing lives at one address. Mounted last so it never shadows the API routes.
+_static_dir = os.environ.get("LOKEY_STATIC_DIR")
+if _static_dir and Path(_static_dir).is_dir():
+    app.mount("/", StaticFiles(directory=_static_dir, html=True), name="web")

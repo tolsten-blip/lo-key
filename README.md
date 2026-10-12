@@ -51,7 +51,7 @@ YouTube link ──► yt-dlp ──► Basic Pitch ──► arranger ──►
 
 ## Opening the app
 
-### In your browser, with nothing to install (recommended)
+### In your browser with GitHub Codespaces
 
 Click **Open in GitHub Codespaces** above, then **Create codespace**. The
 first launch takes about 5 minutes while it installs everything; after that,
@@ -63,6 +63,38 @@ To come back later, open https://github.com/codespaces and pick your
 codespace. It starts in seconds. Codespaces shut down by themselves after 30
 minutes of inactivity, so you aren't charged for idle time. Personal accounts
 include free hours each month.
+
+### With Docker, on your own computer (no GitHub needed)
+
+Install [Docker Desktop](https://www.docker.com/products/docker-desktop/),
+then, from this folder:
+
+```bash
+docker build -t lo-key .
+docker run -p 7860:7860 lo-key
+```
+
+Open http://localhost:7860. The first build takes about 5–10 minutes; after
+that, `docker run` starts in seconds. YouTube links work most reliably this
+way, because the download comes from your home internet connection.
+
+### Host it online with a public link
+
+The same container runs on any host that accepts a Dockerfile. It needs
+about **4 GB of RAM** for the transcription model, so very small free tiers
+won't work.
+
+- **Hugging Face Spaces** (free: 2 CPUs, 16 GB RAM). Create a Space, choose
+  **Docker → Blank**, and upload this project's files, keeping the
+  `README.md` the Space created for you (it holds the Space's settings). Add
+  `app_port: 7860` to that README's settings block. The Space sleeps after
+  two days without visitors and wakes on the next visit.
+- **Render**, **Railway** or **Fly.io**: point them at the `Dockerfile`.
+  They set `$PORT` automatically. Choose a plan with at least 4 GB of RAM.
+
+**Heads-up:** YouTube often blocks downloads from cloud servers, so on a
+hosted copy YouTube links may fail while audio uploads keep working. Running
+it on your own computer avoids this.
 
 ### Demo only, on any device
 
