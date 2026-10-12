@@ -5,7 +5,7 @@ import { Keyboard } from "./keyboard";
 import { MicListener, MidiListener, type NoteSource } from "./listener";
 import { buildSteps, noteName } from "./music";
 import { Practice } from "./practice";
-import { Playback, playNotes } from "./synth";
+import { Playback, playNotes, preloadPiano } from "./synth";
 import type { Hand, Lesson, Level } from "./types";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -112,6 +112,8 @@ let levelIndex = 0;
 function openLesson(l: Lesson) {
   stopPlayback();
   lesson = l;
+  // Fetch just the piano recordings this song needs (plus the keyboard around them).
+  preloadPiano(l.levels.flatMap((level) => level.notes.map((n) => n.pitch)).concat([48, 60, 72]));
   $("lesson").hidden = false;
   $("lesson-title").textContent = l.title;
   $("lesson-meta").textContent = `${l.bpm} BPM · ${formatTime(l.duration)}`;

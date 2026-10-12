@@ -43,8 +43,9 @@ YouTube link ──► server ──► Basic Pitch ──► arranger ──►
 - **Tap or click the on-screen keys** to play without a mic. Correct keys stay
   down until the step is complete, so chords can be tapped one key at a time;
   a wrong key flashes red.
-- **Play it for me** plays the current level at the song's tempo, from the
-  current step, lighting the keys and moving the dial as it goes.
+- **Play it for me** plays the current level on a sampled grand piano at the
+  song's tempo, from the current step, lighting the keys and moving the dial
+  as it goes.
 - **🔊 Hear it** plays the current notes, and a built-in demo song lets you
   try practice mode straight away.
 
@@ -102,6 +103,15 @@ The dev container installs everything and opens the app in a browser tab.
 The Pages workflow publishes the web app to
 https://tolsten-blip.github.io/lo-key/ once Pages is enabled in the
 repository settings (**Settings → Pages → Source: GitHub Actions**).
+
+## Credits
+
+- Piano sound: [Salamander Grand Piano](https://sfzinstruments.github.io/pianos/salamander)
+  by Alexander Holm, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
+  (`frontend/public/piano/`, via [Tone.js's audio repo](https://github.com/Tonejs/audio)).
+  Only the recordings a song needs are downloaded.
+- Transcription: [Basic Pitch](https://github.com/spotify/basic-pitch) by
+  Spotify, Apache 2.0.
 
 ## Tests
 
