@@ -5,12 +5,14 @@ import { Keyboard } from "./keyboard";
 import { MicListener, MidiListener, type NoteSource } from "./listener";
 import { buildSteps, noteName } from "./music";
 import { Practice } from "./practice";
+import { Staff } from "./staff";
 import { Playback, playNotes, preloadPiano } from "./synth";
 import type { Hand, Lesson, Level } from "./types";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 const keyboard = new Keyboard($("keyboard"), onKeyPress);
+const staff = new Staff($("staff"));
 let lesson: Lesson | undefined;
 let practice: Practice | undefined;
 let source: NoteSource | undefined;
@@ -171,6 +173,39 @@ $("knob").addEventListener("keydown", (e) => {
   selectLevel(Math.min(Math.max(levelIndex + delta, 0), lesson.levels.length - 1));
 });
 
+const secondsPerBar = () => (lesson ? (4 * 60) / lesson.bpm : 2);
+
+// ---- Keys / Notes view switch ------------------------------------------------
+
+const VIEW_KEY = "lo-key:view";
+let showingStaff = false;
+
+function setView(staffView: boolean) {
+  showingStaff = staffView;
+  $("keyboard").hidden = staffView;
+  $("staff").hidden = !staffView;
+  $("view-keys").setAttribute("aria-pressed", String(!staffView));
+  $("view-staff").setAttribute("aria-pressed", String(staffView));
+  document.querySelector(".legend .sw.next")!.parentElement!.hidden = staffView; // the staff shows what's next in black
+  try {
+    localStorage.setItem(VIEW_KEY, staffView ? "staff" : "keys");
+  } catch {
+    // Private mode etc.: the choice just won't be remembered.
+  }
+  render();
+}
+
+// The staff picks how many steps fit, so redraw it when the window changes size.
+addEventListener("resize", () => showingStaff && render());
+
+$("view-keys").addEventListener("click", () => setView(false));
+$("view-staff").addEventListener("click", () => setView(true));
+try {
+  if (localStorage.getItem(VIEW_KEY) === "staff") setView(true);
+} catch {
+  // Keys view by default.
+}
+
 function moveDial(time: number) {
   if (lesson) $("ruler").style.transform = `translateX(${(-time * lesson.bpm * PX_PER_BEAT) / 60}px)`;
 }
@@ -199,6 +234,7 @@ function render() {
   const now = new Map<number, Hand>(step?.notes.map((n) => [n.pitch, n.hand]) ?? []);
   const next = new Set(practice.next?.notes.map((n) => n.pitch) ?? []);
   keyboard.update({ now, next, heard });
+  if (showingStaff) staff.render(practice.steps, practice.index, heard, secondsPerBar());
 
   const total = practice.steps.length;
   $("progress").textContent = `${Math.min(practice.index + 1, total)} / ${total}`;
@@ -313,6 +349,12 @@ const MUTED_FOR_PLAYBACK = 24 * 60 * 60 * 1000; // until stopPlayback() unmutes
 const playback = new Playback(
   (time, sounding) => {
     keyboard.update({ now: new Map(sounding.map((n) => [n.pitch, n.hand])), next: new Set(), heard: new Set() });
+    if (showingStaff && practice) {
+      // The step being played: the last one that has started.
+      let i = practice.steps.findIndex((step) => step.time > time + 0.01);
+      if (i === -1) i = practice.steps.length;
+      staff.render(practice.steps, Math.max(i - 1, 0), new Set(), secondsPerBar());
+    }
     moveDial(time);
     $("chord").textContent = chordAt(time)?.name ?? "–";
     $("play-names").textContent = "Listen…";

@@ -32,6 +32,10 @@ YouTube link ──► server ──► Basic Pitch ──► arranger ──►
   4. **Full**: the complete melody, with chords on every beat.
 - An overhead keyboard: blue keys are the right hand, orange keys the left,
   the faint keys are coming up next, and keys turn green when they're heard.
+- **Keys / Notes switch:** show the lesson on a grand staff instead of the
+  keyboard, with the same colours, for sight-reading practice. Notes are
+  shown as noteheads in order (without rhythm values), with the current step
+  highlighted and the next few steps to read ahead.
 - **Wait-for-me practice:** the lesson moves on only once every note in the
   current step has been heard. A note has to be struck again to count twice,
   so C-C-C really needs three presses.
