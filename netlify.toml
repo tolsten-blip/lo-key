@@ -1,0 +1,14 @@
+# Netlify: the web app is fully static; songs are analyzed in the browser.
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# The transcription model and hashed assets never change once published.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

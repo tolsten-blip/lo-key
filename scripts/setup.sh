@@ -3,16 +3,16 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# Basic Pitch (the transcription model) only supports Python 3.10 and 3.11.
+# Python 3.10+ is needed for the YouTube server.
 PYTHON=""
-for candidate in python3.11 python3.10 python3; do
-  if command -v "$candidate" >/dev/null && "$candidate" -c 'import sys; sys.exit(sys.version_info[:2] not in ((3, 10), (3, 11)))'; then
+for candidate in python3.12 python3.11 python3.10 python3; do
+  if command -v "$candidate" >/dev/null && "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 10))'; then
     PYTHON=$candidate
     break
   fi
 done
 if [ -z "$PYTHON" ]; then
-  echo "Python 3.10 or 3.11 is required (Basic Pitch doesn't support newer versions yet)." >&2
+  echo "Python 3.10 or newer is required." >&2
   exit 1
 fi
 
@@ -26,7 +26,7 @@ if ! command -v ffmpeg >/dev/null; then
   fi
 fi
 
-echo "Installing Python packages (this takes a few minutes the first time)…"
+echo "Installing Python packages (this takes a minute the first time)…"
 [ -d .venv ] || "$PYTHON" -m venv .venv
 .venv/bin/pip install -q --upgrade pip
 .venv/bin/pip install -q -r backend/requirements.txt

@@ -1,41 +1,35 @@
 # Piano Lo-Key
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tolsten-blip/lo-key?quickstart=1)
+Turn a song into a beginner piano lesson. Upload a song's audio file (or, in
+the desktop version, paste a YouTube link), and Piano Lo-Key works out the
+melody and chords, builds a few difficulty levels, and then teaches it to you
+on an on-screen keyboard. It listens through your microphone (or a MIDI
+keyboard) and only moves on when it hears you play the right notes.
 
-**Try the demo on your phone:** https://tolsten-blip.github.io/lo-key/ (demo song only)
-
-Turn a song into a beginner piano lesson. Paste a YouTube link (or upload an
-audio file), and Piano Lo-Key works out the melody and chords, builds a few
-difficulty levels, and then teaches it to you on an on-screen keyboard. It
-listens through your microphone (or a MIDI keyboard) and only moves on when
-it hears you play the right notes.
+Everything runs **in your browser**: songs are analyzed on your own device
+and never uploaded anywhere. The only part that needs a server is fetching
+audio from YouTube, which is optional.
 
 ## How it works
 
 ```
-YouTube link ──► yt-dlp ──► Basic Pitch ──► arranger ──► lesson JSON ──► practice UI
- (or upload)     (audio)    (audio → notes)  (melody, chords,           (keyboard + mic)
-                                              difficulty levels)
+audio file ─────────────────────┐
+                                ▼
+YouTube link ──► server ──► Basic Pitch ──► arranger ──► practice UI
+(optional)     (yt-dlp)    (audio → notes,  (melody, chords,  (keyboard + mic)
+                            in the browser)  difficulty levels)
 ```
 
-**Backend** (`backend/`, Python + FastAPI)
-- `lokey/youtube.py`: accepts any common YouTube link format, rejects live
-  streams and videos over 10 minutes, and downloads the audio with yt-dlp.
-- `lokey/transcribe.py`: converts audio to notes with Spotify's
-  [Basic Pitch](https://github.com/spotify/basic-pitch) and finds the beat
-  with librosa.
-- `lokey/arrange.py`: pulls out the melody (the top voice) and the chords
-  (matched against the 24 major and minor triads), then builds four levels:
+**Web app** (`frontend/`, TypeScript + Vite, no framework)
+- `analysis/`: decodes the audio, runs Spotify's
+  [Basic Pitch](https://github.com/spotify/basic-pitch) model with
+  TensorFlow.js in a background worker, finds the beat, and arranges the
+  notes into four levels:
   1. **Melody**: right hand only, one note per beat, within C4–C5.
   2. **Melody + bass**: adds the chord's root note in the left hand.
   3. **Melody + chords**: the left hand plays a simple triad at each chord
      change, voiced so the hand barely moves.
   4. **Full**: the complete melody, with chords on every beat.
-- `lokey/app.py`: the API. Submit a job, then poll it until it's done.
-  Analyses run one at a time, and a repeated YouTube link reuses the earlier
-  result.
-
-**Frontend** (`frontend/`, TypeScript + Vite, no framework)
 - An overhead keyboard: blue keys are the right hand, orange keys the left,
   the faint keys are coming up next, and keys turn green when they're heard.
 - **Wait-for-me practice:** the lesson moves on only once every note in the
@@ -46,25 +40,30 @@ YouTube link ──► yt-dlp ──► Basic Pitch ──► arranger ──►
   pitch detection. It ignores overtones and the energy a loud note spills
   into neighbouring frequencies.
 - **MIDI keyboard** support, where the browser has Web MIDI. It's exact.
-- **🔊 Hear it** plays the current notes. A demo song works without the
-  backend.
+- **🔊 Hear it** plays the current notes, and a built-in demo song lets you
+  try practice mode straight away.
+
+**Server** (`backend/`, Python + FastAPI, optional)
+- `POST /api/youtube`: downloads a video's audio with yt-dlp. It accepts any
+  common YouTube link format and rejects live streams and videos over 10
+  minutes.
+- When the server is running, the web app shows the YouTube box; without
+  it, the box is hidden and uploads still work.
 
 ## Opening the app
 
-### In your browser with GitHub Codespaces
+### Netlify (free, public link, no server)
 
-Click **Open in GitHub Codespaces** above, then **Create codespace**. The
-first launch takes about 5 minutes while it installs everything; after that,
-the app opens in a new browser tab by itself. If the tab doesn't open, go to
-the **Ports** tab at the bottom of the editor and click the 🌐 globe next to
-"Piano Lo-Key".
+Either way gives you a link that works on phones and laptops, with uploads
+and practice. YouTube links need the server, so they're hidden here.
 
-To come back later, open https://github.com/codespaces and pick your
-codespace. It starts in seconds. Codespaces shut down by themselves after 30
-minutes of inactivity, so you aren't charged for idle time. Personal accounts
-include free hours each month.
+- **Drag and drop:** run `cd frontend && npm install && npm run build`, then
+  drag the `frontend/dist` folder onto https://app.netlify.com/drop.
+- **Auto-deploy from Git:** in Netlify, choose **Add new site → Import an
+  existing project** and pick this repository. `netlify.toml` has the
+  settings, and every push redeploys.
 
-### With Docker, on your own computer (no GitHub needed)
+### With Docker, on your own computer (includes YouTube links)
 
 Install [Docker Desktop](https://www.docker.com/products/docker-desktop/),
 then, from this folder:
@@ -74,64 +73,49 @@ docker build -t lo-key .
 docker run -p 7860:7860 lo-key
 ```
 
-Open http://localhost:7860. The first build takes about 5–10 minutes; after
-that, `docker run` starts in seconds. YouTube links work most reliably this
-way, because the download comes from your home internet connection.
+Open http://localhost:7860. The same container also runs on hosts like
+Hugging Face Spaces, Render, Railway or Fly.io (it listens on `$PORT`).
+YouTube often blocks downloads from cloud servers, though, so YouTube links
+work most reliably on your own computer.
 
-### Host it online with a public link
+### Without Docker, for development
 
-The same container runs on any host that accepts a Dockerfile. It needs
-about **4 GB of RAM** for the transcription model, so very small free tiers
-won't work.
-
-- **Hugging Face Spaces** (free: 2 CPUs, 16 GB RAM). Create a Space, choose
-  **Docker → Blank**, and upload this project's files, keeping the
-  `README.md` the Space created for you (it holds the Space's settings). Add
-  `app_port: 7860` to that README's settings block. The Space sleeps after
-  two days without visitors and wakes on the next visit.
-- **Render**, **Railway** or **Fly.io**: point them at the `Dockerfile`.
-  They set `$PORT` automatically. Choose a plan with at least 4 GB of RAM.
-
-**Heads-up:** YouTube often blocks downloads from cloud servers, so on a
-hosted copy YouTube links may fail while audio uploads keep working. Running
-it on your own computer avoids this.
-
-### Demo only, on any device
-
-https://tolsten-blip.github.io/lo-key/ has the demo song and mic practice,
-but can't analyze new songs, since that needs the Python server.
-
-### On your own computer
-
-You need Python **3.10 or 3.11** (Basic Pitch doesn't support 3.12+ yet),
-Node 18+, and `ffmpeg`.
+You need Python 3.10+, Node 18+, and `ffmpeg`.
 
 ```bash
 bash scripts/start.sh   # installs everything on first run, then starts the app
 ```
 
-Open http://localhost:5173. Phone browsers only allow the microphone over
-HTTPS (or on localhost), so to practice on a phone, use Codespaces or a
-tunnel such as `ngrok`.
+Open http://localhost:5173. To skip the server entirely, run
+`cd frontend && npm install && npm run dev`; uploads still work.
 
-### Tests
+### GitHub Codespaces / Pages
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tolsten-blip/lo-key?quickstart=1)
+
+The dev container installs everything and opens the app in a browser tab.
+The Pages workflow publishes the web app to
+https://tolsten-blip.github.io/lo-key/ once Pages is enabled in the
+repository settings (**Settings → Pages → Source: GitHub Actions**).
+
+## Tests
 
 ```bash
-cd backend && ../.venv/bin/python -m pytest
 cd frontend && npm test
+cd backend && ../.venv/bin/python -m pytest
 ```
 
 ## Known limitations and next steps
 
+- **Analysis speed depends on the device.** It runs on the device's graphics
+  chip where possible; expect roughly real time on a laptop and slower on
+  older phones.
 - **Full band mixes are noisy.** Basic Pitch hears every instrument, so the
   "top voice" melody sometimes picks up guitar or synth lines and overtones.
-  The biggest quality jump will come from separating the vocals first with
-  [Demucs](https://github.com/facebookresearch/demucs) and transcribing the
-  melody from the vocal track alone.
+  Separating the vocals first (e.g. with Demucs) would give the biggest
+  jump in quality.
 - Chords are major and minor triads only (no 7ths or sus chords), which is
   usually what you want for beginners.
-- Jobs live in memory, so restarting the server forgets them. A real
-  deployment needs a job queue and storage.
 - No key transposition yet. Moving songs to C, G or F major would make them
   easier for beginners.
 - **YouTube:** downloading audio may conflict with YouTube's Terms of

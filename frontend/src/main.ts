@@ -1,11 +1,12 @@
-import { submitUpload, submitYouTube, waitForJob } from "./api";
+import { analyzeAudio, type Stage } from "./analysis/analyze";
+import { fetchYouTubeAudio, youtubeAvailable } from "./api";
 import { DEMO_LESSON } from "./demo";
 import { Keyboard } from "./keyboard";
 import { MicListener, MidiListener, type NoteSource } from "./listener";
 import { buildSteps, noteName } from "./music";
 import { Practice } from "./practice";
 import { playNotes } from "./synth";
-import type { Hand, Job, Lesson, Level } from "./types";
+import type { Hand, Lesson, Level } from "./types";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -17,25 +18,30 @@ let heard = new Set<number>();
 
 // ---- Loading a song -------------------------------------------------------
 
-const STATUS_TEXT: Record<Job["status"], string> = {
-  queued: "Waiting in line…",
-  downloading: "Getting the audio…",
-  transcribing: "Listening for notes. This takes about as long as the song.",
-  arranging: "Simplifying it for piano…",
-  done: "Ready!",
-  error: "",
-};
-const STEP_ORDER = ["queued", "downloading", "transcribing", "arranging", "done"];
+type Step = "downloading" | Stage;
 
-function showStatus(job: Job) {
+const STEP_OF: Record<Step, string> = {
+  downloading: "audio",
+  decoding: "audio",
+  transcribing: "notes",
+  arranging: "arrange",
+};
+
+function showStep(step: Step, fraction?: number) {
   $("status").hidden = false;
-  $("status-text").textContent = job.status === "error" ? job.error ?? "Something went wrong." : STATUS_TEXT[job.status];
-  $("status-text").classList.toggle("error", job.status === "error");
-  const at = STEP_ORDER.indexOf(job.status);
+  $("status-text").classList.remove("error");
+  $("status-text").textContent = {
+    downloading: "Getting the audio from YouTube…",
+    decoding: "Reading the audio…",
+    transcribing: `Listening for notes… ${Math.round((fraction ?? 0) * 100)}%`,
+    arranging: "Simplifying it for piano…",
+  }[step];
+  const order = ["audio", "notes", "arrange"];
+  const at = order.indexOf(STEP_OF[step]);
   document.querySelectorAll<HTMLLIElement>("#steps li").forEach((li) => {
-    const i = STEP_ORDER.indexOf(li.dataset.step!);
+    const i = order.indexOf(li.dataset.step!);
     li.classList.toggle("active", i === at);
-    li.classList.toggle("complete", at > i);
+    li.classList.toggle("complete", i < at);
   });
 }
 
@@ -46,11 +52,13 @@ function showError(message: string) {
   $("status-text").classList.add("error");
 }
 
-async function run(submit: () => Promise<Job>) {
+async function run(getAudio: () => Promise<{ data: ArrayBuffer; title: string }>) {
   setBusy(true);
   try {
-    const job = await waitForJob(await submit(), showStatus);
-    if (job.status === "done" && job.lesson) openLesson(job.lesson);
+    const { data, title } = await getAudio();
+    const result = await analyzeAudio(data, title, showStep);
+    $("status").hidden = true;
+    openLesson(result);
   } catch (err) {
     showError((err as Error).message);
   } finally {
@@ -60,17 +68,23 @@ async function run(submit: () => Promise<Job>) {
 
 function setBusy(busy: boolean) {
   document.querySelectorAll<HTMLButtonElement | HTMLInputElement>("#load button, #load input").forEach((el) => (el.disabled = busy));
+  $("load").classList.toggle("busy", busy);
 }
 
 $("youtube-form").addEventListener("submit", (e) => {
   e.preventDefault();
   const url = $<HTMLInputElement>("youtube-url").value;
-  run(() => submitYouTube(url));
+  run(() => {
+    showStep("downloading");
+    return fetchYouTubeAudio(url);
+  });
 });
 
 $<HTMLInputElement>("upload").addEventListener("change", (e) => {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (file) run(() => submitUpload(file));
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = ""; // so picking the same file again still triggers a change
+  if (file) run(async () => ({ data: await file.arrayBuffer(), title: file.name.replace(/\.[^.]+$/, "") }));
 });
 
 $("demo").addEventListener("click", () => {
@@ -78,13 +92,13 @@ $("demo").addEventListener("click", () => {
   openLesson(DEMO_LESSON);
 });
 
-if (import.meta.env.VITE_DEMO_ONLY === "true") {
-  $("demo-only-note").hidden = false;
-  $("youtube-form").hidden = true;
-  document.querySelectorAll<HTMLElement>(".file-button, .alt > span").forEach((el) => (el.hidden = true));
-  $("demo").textContent = "Start the demo song";
-  $("demo").classList.remove("link");
-}
+// YouTube links need the optional server; without one (e.g. on Netlify),
+// songs are uploaded and analyzed right here in the browser.
+youtubeAvailable().then((available) => {
+  $("youtube-form").hidden = !available;
+  $("no-youtube-note").hidden = available;
+  document.querySelector(".file-button")!.classList.toggle("primary", !available);
+});
 
 // ---- Lesson & practice ----------------------------------------------------
 

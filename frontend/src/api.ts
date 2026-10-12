@@ -1,37 +1,29 @@
-import type { Job } from "./types";
+// The optional server only fetches YouTube audio; analysis happens in the browser.
 
-const UNREACHABLE = "Can't reach the song analyzer. Make sure the server is running (bash scripts/start.sh).";
+const API = `${import.meta.env.BASE_URL}api`;
 
-async function request(path: string, init?: RequestInit): Promise<Job> {
-  const res = await fetch(path, init).catch(() => {
-    throw new Error(UNREACHABLE);
-  });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.detail ?? (res.status >= 500 || res.status === 404 ? UNREACHABLE : `Request failed (${res.status})`));
-  return body as Job;
+/** True when a server that can fetch YouTube audio is running behind this page. */
+export async function youtubeAvailable(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API}/health`);
+    return res.ok && (await res.json()).youtube === true;
+  } catch {
+    return false;
+  }
 }
 
-export function submitYouTube(url: string): Promise<Job> {
-  return request("/api/jobs/youtube", {
+export async function fetchYouTubeAudio(url: string): Promise<{ data: ArrayBuffer; title: string }> {
+  const res = await fetch(`${API}/youtube`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url }),
+  }).catch(() => {
+    throw new Error("Can't reach the server to get that video.");
   });
-}
-
-export function submitUpload(file: File): Promise<Job> {
-  const form = new FormData();
-  form.append("file", file);
-  return request("/api/jobs/upload", { method: "POST", body: form });
-}
-
-/** Poll a job until it finishes, reporting each status change. */
-export async function waitForJob(job: Job, onUpdate: (job: Job) => void, intervalMs = 1500): Promise<Job> {
-  onUpdate(job);
-  while (job.status !== "done" && job.status !== "error") {
-    await new Promise((r) => setTimeout(r, intervalMs));
-    job = await request(`/api/jobs/${job.id}`);
-    onUpdate(job);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail ?? "Couldn't get the audio for that video.");
   }
-  return job;
+  const title = decodeURIComponent(res.headers.get("X-Title") ?? "YouTube song");
+  return { data: await res.arrayBuffer(), title };
 }

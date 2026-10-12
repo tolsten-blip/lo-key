@@ -1,4 +1,5 @@
-# Piano Lo-Key as a single container: the web app and the song analyzer.
+# Piano Lo-Key as a single container: the web app plus the small server that
+# fetches YouTube audio (songs themselves are analyzed in the browser).
 #   docker build -t lo-key .
 #   docker run -p 7860:7860 lo-key     then open http://localhost:7860
 
@@ -10,18 +11,16 @@ RUN npm ci --no-audit --no-fund
 COPY frontend/ ./
 RUN npm run build
 
-# 2. Python server that also serves the built web app.
+# 2. Python server that fetches YouTube audio and serves the built web app.
 FROM python:3.11-slim
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Some hosts (e.g. Hugging Face Spaces) run as a non-root user with a
-# read-only home, so keep every cache in /tmp.
+# read-only home, so keep yt-dlp's cache in /tmp.
 ENV PYTHONUNBUFFERED=1 \
     XDG_CACHE_HOME=/tmp/cache \
-    NUMBA_CACHE_DIR=/tmp/numba \
-    MPLCONFIGDIR=/tmp/matplotlib \
     LOKEY_STATIC_DIR=/app/static \
     PORT=7860
 

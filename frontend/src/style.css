@@ -128,6 +128,18 @@ button.secondary,
   border: 1px solid var(--line);
 }
 
+.file-button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.busy .file-button {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .file-button {
   display: inline-block;
   margin: 0;

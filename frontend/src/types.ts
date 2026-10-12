@@ -21,14 +21,3 @@ export interface Lesson {
   chords: { start: number; end: number; name: string }[];
   levels: Level[];
 }
-
-export type JobStatus = "queued" | "downloading" | "transcribing" | "arranging" | "done" | "error";
-
-export interface Job {
-  id: string;
-  source: string;
-  status: JobStatus;
-  title: string | null;
-  error: string | null;
-  lesson: Lesson | null;
-}

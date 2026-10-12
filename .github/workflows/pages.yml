@@ -1,6 +1,6 @@
-# Publishes the web app (demo song + mic practice) to GitHub Pages.
-# Song analysis needs the Python server, so it's switched off in this build.
-name: Deploy demo to GitHub Pages
+# Publishes the web app to GitHub Pages. Uploaded songs are analyzed in the
+# browser; YouTube links are hidden because there's no server behind Pages.
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -29,8 +29,6 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Test and build
         working-directory: frontend
-        env:
-          VITE_DEMO_ONLY: "true"
         run: |
           npm ci --no-audit --no-fund
           npm test
