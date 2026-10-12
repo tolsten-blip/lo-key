@@ -1,29 +1,52 @@
+/* Soft-touch hardware look: a warm display panel, speaker grille, gold
+   readout, tuning dial, rotary knob and a two-position switch. */
+
 :root {
-  --bg: #f6f4ef;
-  --card: #ffffff;
-  --ink: #1f2430;
-  --muted: #6b7180;
-  --line: #e2ded5;
-  --accent: #3a5bd9;
-  --right: #3a7bd9;
-  --left: #e08a2e;
-  --heard: #2fae6b;
-  --error: #c43d3d;
-  --key-white: #ffffff;
-  --key-black: #23262e;
+  --bg: #e6e6e8;
+  --panel: #ededee;
+  --display: #ebe8df;
+  --display-edge: #dcd7ca;
+  --ink: #2b2b2e;
+  --muted: #7b7b80;
+  --faint: #b9b6ae;
+  --gold: #ab9361;
+  --gold-soft: #d8ccb0;
+  --right: #b0955a;
+  --left: #586a80;
+  --heard: #6b9c70;
+  --error: #b5483f;
+  --key-white: #fbfbfa;
+  --key-black: #2c2c2f;
+  --keybed: #303033;
+  --raise: 6px 6px 14px rgba(0, 0, 0, 0.12), -6px -6px 14px rgba(255, 255, 255, 0.85);
+  --inset: inset 3px 3px 8px rgba(0, 0, 0, 0.1), inset -3px -3px 8px rgba(255, 255, 255, 0.8);
+  --grille-dot: rgba(0, 0, 0, 0.13);
+  --grille-dot-strong: rgba(0, 0, 0, 0.55);
+  --display-font: "Saira Condensed", "Arial Narrow", system-ui, sans-serif;
   color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #15171c;
-    --card: #1e2128;
-    --ink: #e9eaee;
-    --muted: #9aa0ad;
-    --line: #2f333d;
-    --accent: #7b96ff;
-    --key-white: #e9e7e1;
-    --key-black: #0c0d10;
+    --bg: #1c1d20;
+    --panel: #232428;
+    --display: #2a2925;
+    --display-edge: #34322c;
+    --ink: #ecebe7;
+    --muted: #9c9a94;
+    --faint: #5a5852;
+    --gold: #cdb27a;
+    --gold-soft: #5c5240;
+    --right: #c6a868;
+    --left: #7d93ad;
+    --heard: #7fb184;
+    --key-white: #e8e6e0;
+    --key-black: #141416;
+    --keybed: #111113;
+    --raise: 6px 6px 14px rgba(0, 0, 0, 0.45), -4px -4px 12px rgba(255, 255, 255, 0.04);
+    --inset: inset 3px 3px 8px rgba(0, 0, 0, 0.5), inset -2px -2px 6px rgba(255, 255, 255, 0.04);
+    --grille-dot: rgba(255, 255, 255, 0.08);
+    --grille-dot-strong: rgba(255, 255, 255, 0.4);
   }
 }
 
@@ -31,89 +54,34 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 16px/1.5 "Saira Semi Condensed", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 header,
 main {
-  max-width: 960px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 0 16px;
 }
 
 header {
-  padding-top: 32px;
+  padding-top: 28px;
+  padding-bottom: 18px;
 }
 
-h1 {
-  margin: 0;
-  font-size: 2rem;
-  letter-spacing: -0.02em;
-}
-
-h1 span {
-  color: var(--accent);
-}
-
-.tagline,
-.meta {
-  color: var(--muted);
-}
-
-.tagline {
-  margin: 4px 0 24px;
-}
-
-.card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-h2 {
-  margin: 0 0 12px;
-  font-size: 1.25rem;
-}
-
-label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-
-.row {
-  display: flex;
-  gap: 8px;
-}
-
-input[type="url"] {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--ink);
+button {
   font: inherit;
-}
-
-button,
-.file-button {
-  padding: 10px 16px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--accent);
-  color: #fff;
-  font: inherit;
-  font-weight: 600;
+  color: inherit;
   cursor: pointer;
-  white-space: nowrap;
 }
 
 button:disabled {
@@ -121,18 +89,114 @@ button:disabled {
   cursor: default;
 }
 
-button.secondary,
-.file-button {
-  background: transparent;
-  color: var(--ink);
-  border: 1px solid var(--line);
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
 }
 
-.file-button.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  font-weight: 600;
+/* ---- Brand ---------------------------------------------------------------- */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-grille {
+  width: 44px;
+  height: 28px;
+  border-radius: 6px;
+  background: radial-gradient(circle, var(--grille-dot-strong) 1.4px, transparent 1.8px) 0 0 / 6px 6px;
+}
+
+h1 {
+  margin: 0;
+  font: 600 2rem/1 var(--display-font);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tagline {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+/* ---- Panels --------------------------------------------------------------- */
+
+.panel,
+.radio {
+  background: var(--panel);
+  border-radius: 28px;
+  box-shadow: var(--raise);
+  padding: 22px;
+  margin-bottom: 24px;
+}
+
+h2 {
+  margin: 0 0 14px;
+  font: 500 1.35rem/1.2 var(--display-font);
+  letter-spacing: 0.02em;
+}
+
+label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+input[type="url"] {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: var(--inset);
+  color: var(--ink);
+  font: inherit;
+}
+
+input[type="url"]::placeholder {
+  color: var(--faint);
+}
+
+.pill {
+  display: inline-block;
+  padding: 11px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: var(--raise);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: box-shadow 0.15s;
+}
+
+.pill:active {
+  box-shadow: var(--inset);
+}
+
+.pill.primary {
+  background: var(--ink);
+  color: var(--panel);
+}
+
+label.pill {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1rem;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
 }
 
 .busy .file-button {
@@ -140,49 +204,40 @@ button.secondary,
   pointer-events: none;
 }
 
-.file-button {
-  display: inline-block;
-  margin: 0;
-  font-weight: 500;
-}
-
 button.link {
   background: none;
-  color: var(--accent);
+  border: 0;
   padding: 0;
+  color: var(--gold);
   font-weight: 500;
   text-decoration: underline;
-}
-
-.note {
-  margin: 0 0 4px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-}
-
-.note a {
-  color: var(--accent);
-  font-weight: 600;
-}
-
-[hidden] {
-  display: none !important;
+  text-underline-offset: 3px;
 }
 
 .alt {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   flex-wrap: wrap;
-  margin-top: 14px;
+  margin-top: 18px;
   color: var(--muted);
 }
 
+.note {
+  margin: 0 0 6px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  box-shadow: var(--inset);
+  color: var(--muted);
+}
+
+/* Loading progress as indicator lamps. */
 .status {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--display);
+  box-shadow: var(--inset);
 }
 
 .status ol {
@@ -197,104 +252,200 @@ button.link {
 }
 
 .status li::before {
-  content: "○ ";
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--faint);
+  vertical-align: 1px;
 }
 
 .status li.active {
-  color: var(--accent);
-  font-weight: 600;
+  color: var(--ink);
 }
 
 .status li.active::before {
-  content: "◐ ";
-}
-
-.status li.complete {
-  color: var(--heard);
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
 }
 
 .status li.complete::before {
-  content: "● ";
+  background: var(--heard);
 }
 
 .status p {
   margin: 0;
+  font-family: var(--display-font);
+  font-size: 1.1rem;
 }
 
 .error {
   color: var(--error);
 }
 
-.lesson-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  flex-wrap: wrap;
+/* ---- Display: grille, station, gold readout ------------------------------- */
+
+.display {
+  border-radius: 22px;
+  background: var(--display);
+  box-shadow: inset 0 0 0 1px var(--display-edge), var(--inset);
+  padding: 18px 16px 22px;
+  text-align: center;
 }
 
-.levels {
-  display: flex;
+.grille {
+  position: relative;
+  height: 64px;
+  margin: 0 4px 14px;
+  background: radial-gradient(circle, var(--grille-dot) 2px, transparent 2.5px) center 0 / 12px 12px;
+}
+
+/* The dense block sits on the same centred 12px grid. Its mask is an odd
+   number of whole cells wide and centred, so no hole is cut in half. */
+.grille::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, var(--grille-dot-strong) 2.3px, transparent 2.8px) center 0 / 12px 12px;
+  -webkit-mask: linear-gradient(#000, #000) 50% 12px / calc(100% - 96px) 36px no-repeat;
+  mask: linear-gradient(#000, #000) 50% 12px / calc(100% - 96px) 36px no-repeat;
+  -webkit-mask-size: calc(round(down, 100% - 108px, 24px) + 12px) 36px;
+  mask-size: calc(round(down, 100% - 108px, 24px) + 12px) 36px;
+}
+
+.station {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
-.levels button {
+.station-text h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  overflow-wrap: anywhere;
+}
+
+.station-text p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.skip {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
   background: transparent;
   color: var(--ink);
-  border: 1px solid var(--line);
-  font-weight: 500;
 }
 
-.levels button[aria-checked="true"] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+.skip svg {
+  width: 26px;
+  height: 26px;
+  fill: currentColor;
 }
 
-.now {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin: 16px 0 8px;
+.skip:active {
+  box-shadow: var(--inset);
 }
 
-.now div {
+.readout {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  margin-top: 6px;
 }
 
-.now .meta {
-  font-size: 0.8rem;
+.readout-label {
+  font-size: 0.75rem;
+  color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.14em;
 }
 
-.now strong {
-  font-size: 1.5rem;
+.big {
+  font: 500 clamp(4rem, 18vw, 7rem) / 1 var(--display-font);
+  color: var(--gold);
+  letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
 
-.bar {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--line);
-  overflow: hidden;
-  margin-bottom: 16px;
+.play {
+  font-family: var(--display-font);
+  font-size: 1.2rem;
+  color: var(--ink);
+  min-height: 1.5em;
 }
 
-#bar-fill {
-  height: 100%;
-  width: 0;
-  background: var(--heard);
-  transition: width 0.2s;
+/* ---- Tuning dial ---------------------------------------------------------- */
+
+.dial {
+  position: relative;
+  height: 92px;
+  margin: 20px -22px 0;
+  overflow: hidden;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
 }
+
+.ruler {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  height: 46px;
+  transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.3, 1);
+  background:
+    linear-gradient(90deg, var(--gold) 1.5px, transparent 1.5px) 0 0 / calc(var(--beat) * 4) 100% repeat-x,
+    linear-gradient(90deg, var(--gold-soft) 1px, transparent 1px) 0 10px / var(--beat) 26px repeat-x;
+}
+
+.ruler span {
+  position: absolute;
+  top: 52px;
+  transform: translateX(-50%);
+  font-family: var(--display-font);
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.needle {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 3px;
+  height: 72px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+
+.progress-line {
+  margin: 0 0 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.progress-line .link {
+  margin-left: 12px;
+}
+
+#progress {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* ---- Keyboard ------------------------------------------------------------- */
 
 .keyboard-wrap {
   overflow-x: auto;
-  border-radius: 8px;
-  background: var(--key-black);
-  padding: 6px 6px 4px;
+  border-radius: 14px;
+  background: var(--keybed);
+  padding: 8px 8px 5px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 .keyboard {
@@ -304,7 +455,7 @@ button.link {
 }
 
 .key {
-  stroke: var(--key-black);
+  stroke: var(--keybed);
   stroke-width: 1;
   transition: fill 0.08s;
 }
@@ -319,11 +470,11 @@ button.link {
 }
 
 .key.next {
-  fill: color-mix(in srgb, var(--key-white) 70%, var(--accent));
+  fill: color-mix(in srgb, var(--key-white) 72%, var(--gold));
 }
 
 .key.black.next {
-  fill: color-mix(in srgb, var(--key-black) 60%, var(--accent));
+  fill: color-mix(in srgb, var(--key-black) 55%, var(--gold));
 }
 
 .key.right {
@@ -339,33 +490,33 @@ button.link {
 }
 
 .key-label {
-  font-size: 9px;
+  font: 500 9px var(--display-font);
   text-anchor: middle;
-  fill: var(--muted);
+  fill: #8a8a8e;
   pointer-events: none;
 }
 
 .key-label.on {
   fill: #fff;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .legend {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
-  margin: 10px 0 16px;
+  justify-content: center;
+  margin: 12px 0 8px;
   font-size: 0.85rem;
   color: var(--muted);
 }
 
 .sw {
   display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
   margin-right: 6px;
-  vertical-align: -1px;
 }
 
 .sw.right {
@@ -377,26 +528,272 @@ button.link {
 }
 
 .sw.next {
-  background: color-mix(in srgb, var(--key-white) 70%, var(--accent));
-  border: 1px solid var(--line);
+  background: var(--gold-soft);
 }
 
 .sw.heard {
   background: var(--heard);
 }
 
-.controls {
-  display: flex;
+/* ---- Console: volume, knob, switch ---------------------------------------- */
+
+.console {
+  display: grid;
+  grid-template-columns: 64px 1fr 64px;
+  align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.volume {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--panel);
+  box-shadow: var(--raise);
+  display: grid;
+  place-items: center;
+}
+
+.icon-button:active {
+  box-shadow: var(--inset);
+}
+
+.icon-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* A slim vertical fader: dark fill below the thumb, faint track above. */
+#volume {
+  --fill: 70%;
+  appearance: none;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 22px;
+  height: 110px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+#volume::-webkit-slider-runnable-track {
+  width: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to top, var(--ink) var(--fill), var(--faint) var(--fill));
+}
+
+#volume::-moz-range-track {
+  width: 4px;
+  border-radius: 2px;
+  background: var(--faint);
+}
+
+#volume::-moz-range-progress {
+  width: 4px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+
+#volume::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-left: -9px;
+  border: 3px solid var(--panel);
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+#volume::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 3px solid var(--panel);
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.knob-wrap {
+  text-align: center;
+}
+
+.knob-ring {
+  position: relative;
+  width: 210px;
+  height: 200px;
+  margin: 0 auto;
+}
+
+.knob {
+  --angle: 0deg;
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffffff, var(--panel) 60%, color-mix(in srgb, var(--panel) 85%, #000));
+  box-shadow:
+    0 0 0 6px var(--panel),
+    0 0 0 7px rgba(0, 0, 0, 0.06),
+    10px 14px 28px rgba(0, 0, 0, 0.22),
+    -8px -8px 18px rgba(255, 255, 255, 0.8);
+  transform: rotate(var(--angle));
+  transition: transform 0.4s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .knob {
+    background: radial-gradient(circle at 35% 30%, #3a3b40, var(--panel) 65%, #17181a);
+    box-shadow:
+      0 0 0 6px var(--panel),
+      0 0 0 7px rgba(255, 255, 255, 0.04),
+      10px 14px 28px rgba(0, 0, 0, 0.6);
+  }
+}
+
+.knob-dot {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.knob-label {
+  --angle: 0deg;
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  font: 500 1.05rem var(--display-font);
+  color: var(--muted);
+  transform: rotate(var(--angle)) translateY(-98px) rotate(calc(var(--angle) * -1));
+}
+
+.knob-label.on {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.level-name {
+  margin: -6px 0 0;
+  font: 500 1.2rem var(--display-font);
+}
+
+.level-desc {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  min-height: 2.6em;
+}
+
+/* Two-position switch, like AM/FM. */
+.switch {
+  display: flex;
+  flex-direction: column;
+  justify-self: end;
+  width: 64px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: var(--inset), 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.switch button {
+  height: 52px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font: 500 1.15rem var(--display-font);
+  color: var(--faint);
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.switch button + button {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.switch button[aria-pressed="true"] {
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--raise);
+}
+
+.switch button[aria-pressed="true"]::after {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 6px;
+  margin: 2px auto 0;
+  border-radius: 50%;
+  background: var(--heard);
+  box-shadow: 0 0 6px var(--heard);
+}
+
+.listen-status {
+  margin: 6px 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 @media (max-width: 520px) {
+  .panel,
+  .radio {
+    padding: 16px;
+    border-radius: 24px;
+  }
+
   .row {
     flex-direction: column;
   }
 
-  .now strong {
-    font-size: 1.15rem;
+  .dial {
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+
+  .console {
+    grid-template-columns: 52px 1fr 60px;
+    gap: 4px;
+  }
+
+  .knob-ring {
+    width: 180px;
+    height: 176px;
+  }
+
+  .knob {
+    width: 124px;
+    height: 124px;
+    margin: -62px 0 0 -62px;
+  }
+
+  .knob-label {
+    transform: rotate(var(--angle)) translateY(-84px) rotate(calc(var(--angle) * -1));
+  }
+
+  .switch {
+    width: 58px;
   }
 }

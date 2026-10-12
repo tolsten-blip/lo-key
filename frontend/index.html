@@ -5,16 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Piano Lo-Key</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎹</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500;600&family=Saira+Semi+Condensed:wght@400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <header>
-      <h1>Piano <span>Lo-Key</span></h1>
+      <div class="brand">
+        <span class="brand-grille" aria-hidden="true"></span>
+        <h1>Lo-Key</h1>
+      </div>
       <p class="tagline">Turn any song into a beginner piano lesson.</p>
     </header>
 
     <main>
-      <section id="load" class="card">
+      <section id="load" class="panel">
         <h2>Pick a song</h2>
         <p id="no-youtube-note" class="note" hidden>
           Upload a song's audio file (mp3, m4a or wav) and it's turned into a lesson right here on your device;
@@ -24,16 +30,15 @@
           <label for="youtube-url">YouTube link</label>
           <div class="row">
             <input id="youtube-url" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" required />
-            <button type="submit">Analyze</button>
+            <button type="submit" class="pill primary">Analyze</button>
           </div>
         </form>
         <div class="alt">
-          <label class="file-button">
+          <label class="file-button pill">
             Upload an audio file
             <input id="upload" type="file" accept="audio/*" hidden />
           </label>
-          <span>or</span>
-          <button id="demo" class="link" type="button">try the demo song</button>
+          <span>or <button id="demo" class="link" type="button">try the demo song</button></span>
         </div>
         <div id="status" class="status" hidden>
           <ol id="steps">
@@ -45,29 +50,36 @@
         </div>
       </section>
 
-      <section id="lesson" class="card" hidden>
-        <div class="lesson-head">
-          <h2 id="lesson-title"></h2>
-          <span id="lesson-meta" class="meta"></span>
+      <section id="lesson" class="radio" hidden>
+        <div class="display">
+          <div class="grille" aria-hidden="true"></div>
+          <div class="station">
+            <button id="back" class="skip" type="button" aria-label="Previous step">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="2.5" height="14" rx="1" /><path d="M20 5.5v13a.8.8 0 0 1-1.2.7L8.6 12.7a.8.8 0 0 1 0-1.4l10.2-6.5a.8.8 0 0 1 1.2.7z" /></svg>
+            </button>
+            <div class="station-text">
+              <h2 id="lesson-title"></h2>
+              <p id="lesson-meta"></p>
+            </div>
+            <button id="skip" class="skip" type="button" aria-label="Next step">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="17.5" y="5" width="2.5" height="14" rx="1" /><path d="M4 5.5v13a.8.8 0 0 0 1.2.7l10.2-6.5a.8.8 0 0 0 0-1.4L5.2 4.8A.8.8 0 0 0 4 5.5z" /></svg>
+            </button>
+          </div>
+          <div class="readout" aria-live="polite">
+            <span class="readout-label">Chord</span>
+            <strong id="chord" class="big">–</strong>
+            <span id="play-names" class="play"></span>
+          </div>
         </div>
-        <div id="levels" class="levels" role="radiogroup" aria-label="Difficulty"></div>
-        <p id="level-desc" class="meta"></p>
 
-        <div class="now">
-          <div>
-            <span class="meta">Chord</span>
-            <strong id="chord">–</strong>
-          </div>
-          <div>
-            <span class="meta">Play</span>
-            <strong id="play-names">–</strong>
-          </div>
-          <div>
-            <span class="meta">Progress</span>
-            <strong id="progress">0 / 0</strong>
-          </div>
+        <div class="dial" aria-hidden="true">
+          <div id="ruler" class="ruler"></div>
+          <div class="needle"></div>
         </div>
-        <div class="bar"><div id="bar-fill"></div></div>
+        <p class="progress-line">
+          Step <span id="progress">0 / 0</span>
+          <button id="restart" class="link" type="button">Restart</button>
+        </p>
 
         <div id="keyboard" class="keyboard-wrap"></div>
         <div class="legend">
@@ -77,15 +89,31 @@
           <span><i class="sw heard"></i>Heard</span>
         </div>
 
-        <div class="controls">
-          <button id="listen" type="button">🎤 Start listening</button>
-          <button id="midi" type="button" class="secondary" hidden>🎹 Use MIDI keyboard</button>
-          <button id="hint" type="button" class="secondary">🔊 Hear it</button>
-          <button id="back" type="button" class="secondary">◀ Back</button>
-          <button id="skip" type="button" class="secondary">Skip ▶</button>
-          <button id="restart" type="button" class="secondary">Restart</button>
+        <div class="console">
+          <div class="volume">
+            <button id="hint" class="icon-button" type="button" aria-label="Hear the notes" title="Hear the notes">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.2L12 5.6v12.8l-4.8-3.9H4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+            </button>
+            <input id="volume" type="range" min="0" max="1" step="0.05" value="0.7" aria-label="Volume of the notes you hear" />
+          </div>
+
+          <div class="knob-wrap">
+            <div class="knob-ring">
+              <div id="knob-labels"></div>
+              <button id="knob" class="knob" type="button" role="slider" aria-label="Difficulty">
+                <span class="knob-dot"></span>
+              </button>
+            </div>
+            <p id="level-name" class="level-name"></p>
+            <p id="level-desc" class="level-desc"></p>
+          </div>
+
+          <div class="switch" role="group" aria-label="Listen with">
+            <button id="mic" type="button" aria-pressed="false">MIC</button>
+            <button id="midi" type="button" aria-pressed="false">MIDI</button>
+          </div>
         </div>
-        <p id="listen-status" class="meta"></p>
+        <p id="listen-status" class="listen-status">Press MIC to start listening.</p>
       </section>
     </main>
 

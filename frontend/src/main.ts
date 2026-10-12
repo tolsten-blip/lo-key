@@ -102,42 +102,81 @@ youtubeAvailable().then((available) => {
 
 // ---- Lesson & practice ----------------------------------------------------
 
+const PX_PER_BEAT = 14; // tuning-dial scale
+let levelIndex = 0;
+
 function openLesson(l: Lesson) {
   lesson = l;
   $("lesson").hidden = false;
   $("lesson-title").textContent = l.title;
   $("lesson-meta").textContent = `${l.bpm} BPM · ${formatTime(l.duration)}`;
+  buildRuler(l);
 
-  const levels = $("levels");
-  levels.replaceChildren(
+  // Knob positions spread over the top of the dial, like a radio's band selector.
+  const labels = $("knob-labels");
+  labels.replaceChildren(
     ...l.levels.map((level, i) => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.role = "radio";
-      btn.textContent = `${i + 1}. ${level.name}`;
-      btn.addEventListener("click", () => selectLevel(level));
-      btn.dataset.level = level.id;
+      btn.className = "knob-label";
+      btn.textContent = String(i + 1);
+      btn.title = level.name;
+      btn.style.setProperty("--angle", `${knobAngle(i, l.levels.length)}deg`);
+      btn.addEventListener("click", () => selectLevel(i));
       return btn;
     }),
   );
-  selectLevel(l.levels[0]);
+  $("knob").setAttribute("aria-valuemin", "1");
+  $("knob").setAttribute("aria-valuemax", String(l.levels.length));
+  selectLevel(0);
   $("lesson").scrollIntoView({ behavior: "smooth" });
 }
 
-function selectLevel(level: Level) {
-  document.querySelectorAll<HTMLButtonElement>("#levels button").forEach((b) => {
-    b.setAttribute("aria-checked", String(b.dataset.level === level.id));
-  });
+const knobAngle = (i: number, count: number) => (count === 1 ? 0 : -70 + (140 * i) / (count - 1));
+
+function selectLevel(index: number) {
+  if (!lesson) return;
+  levelIndex = index;
+  const level: Level = lesson.levels[index];
+  $("knob").style.setProperty("--angle", `${knobAngle(index, lesson.levels.length)}deg`);
+  $("knob").setAttribute("aria-valuenow", String(index + 1));
+  $("knob").setAttribute("aria-valuetext", `${index + 1}: ${level.name}`);
+  document.querySelectorAll<HTMLButtonElement>(".knob-label").forEach((b, i) => b.classList.toggle("on", i === index));
+  $("level-name").textContent = level.name;
   $("level-desc").textContent = level.description;
 
-  const steps = buildSteps(level.notes);
-  const fresh = new Practice(steps);
+  const fresh = new Practice(buildSteps(level.notes));
   if (practice) fresh.framesRequired = practice.framesRequired;
   practice = fresh;
 
   const pitches = level.notes.map((n) => n.pitch);
   keyboard.setRange(Math.min(...pitches, 60), Math.max(...pitches, 72));
   render();
+}
+
+$("knob").addEventListener("click", () => lesson && selectLevel((levelIndex + 1) % lesson.levels.length));
+$("knob").addEventListener("keydown", (e) => {
+  if (!lesson) return;
+  const delta = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key];
+  if (delta === undefined) return;
+  e.preventDefault();
+  selectLevel(Math.min(Math.max(levelIndex + delta, 0), lesson.levels.length - 1));
+});
+
+/** The tuning dial: one tick per beat, a numbered tick at the start of each bar. */
+function buildRuler(l: Lesson) {
+  const ruler = $("ruler");
+  const beats = Math.ceil((l.duration * l.bpm) / 60);
+  ruler.style.width = `${beats * PX_PER_BEAT}px`;
+  ruler.style.setProperty("--beat", `${PX_PER_BEAT}px`);
+  const labels = [];
+  for (let bar = 0; bar * 4 < beats; bar++) {
+    const label = document.createElement("span");
+    label.textContent = String(bar + 1);
+    label.style.left = `${bar * 4 * PX_PER_BEAT}px`;
+    labels.push(label);
+  }
+  ruler.replaceChildren(...labels);
 }
 
 function render() {
@@ -149,17 +188,17 @@ function render() {
 
   const total = practice.steps.length;
   $("progress").textContent = `${Math.min(practice.index + 1, total)} / ${total}`;
-  $("bar-fill").style.width = `${total ? (100 * practice.index) / total : 0}%`;
+  const time = step?.time ?? lesson.duration;
+  $("ruler").style.transform = `translateX(${(-time * lesson.bpm * PX_PER_BEAT) / 60}px)`;
 
   if (practice.done) {
-    $("play-names").textContent = "Done!";
-    $("chord").textContent = "🎉";
+    $("chord").textContent = "Done!";
+    $("play-names").textContent = "You played the whole song.";
     return;
   }
-  const names = [...now.keys()].sort((a, b) => a - b).map(noteName);
-  $("play-names").textContent = names.join(" ") || "–";
   const chord = step && lesson.chords.find((c) => c.start <= step.time + 0.01 && step.time < c.end);
   $("chord").textContent = chord?.name ?? "–";
+  $("play-names").textContent = "Play " + [...now.keys()].sort((a, b) => a - b).map(noteName).join(" ");
 }
 
 function onHeard(frame: Map<number, number>) {
@@ -173,17 +212,23 @@ function onHeard(frame: Map<number, number>) {
 }
 let lastHeardKey = "";
 
+// ---- Input switch: MIC / MIDI, like a radio's AM/FM ------------------------
+
+function setSwitch(active: "mic" | "midi" | null, status: string) {
+  $("mic").setAttribute("aria-pressed", String(active === "mic"));
+  $("midi").setAttribute("aria-pressed", String(active === "midi"));
+  $("listen-status").textContent = status;
+}
+
 function stopListening() {
   source?.stop();
   source = undefined;
   heard = new Set();
-  $("listen").textContent = "🎤 Start listening";
-  $("midi").textContent = "🎹 Use MIDI keyboard";
-  $("listen-status").textContent = "";
+  setSwitch(null, "Press MIC to start listening.");
   render();
 }
 
-$("listen").addEventListener("click", async () => {
+$("mic").addEventListener("click", async () => {
   const wasMic = source instanceof MicListener;
   stopListening();
   if (wasMic) return;
@@ -192,10 +237,9 @@ $("listen").addEventListener("click", async () => {
     await mic.start();
     source = mic;
     if (practice) practice.framesRequired = 3;
-    $("listen").textContent = "⏹ Stop listening";
-    $("listen-status").textContent = "Listening through your microphone. Play the highlighted keys.";
+    setSwitch("mic", "Listening. Play the highlighted keys.");
   } catch {
-    $("listen-status").textContent = "Couldn't access the microphone. Check your browser's permission settings.";
+    setSwitch(null, "Couldn't access the microphone. Check your browser's permission settings.");
   }
 });
 
@@ -210,22 +254,27 @@ $("midi").addEventListener("click", async () => {
     await midi.start();
     source = midi;
     if (practice) practice.framesRequired = 1;
-    $("midi").textContent = "⏹ Stop MIDI";
-    $("listen-status").textContent = midi.inputCount()
-      ? "Using your MIDI keyboard."
-      : "No MIDI keyboard found yet. Plug one in and it will be picked up.";
+    setSwitch("midi", midi.inputCount() ? "Using your MIDI keyboard." : "No MIDI keyboard found yet. Plug one in and it will be picked up.");
   } catch {
-    $("listen-status").textContent = "Couldn't access MIDI devices.";
+    setSwitch(null, "Couldn't access MIDI devices.");
   }
 });
+
+// ---- Other controls --------------------------------------------------------
 
 $("hint").addEventListener("click", () => {
   const pitches = practice?.current?.notes.map((n) => n.pitch) ?? [];
   if (!pitches.length) return;
   // Don't let the mic mistake our own hint for the student playing.
   if (source instanceof MicListener) source.mute(1200);
-  playNotes(pitches);
+  playNotes(pitches, Number(volume.value));
 });
+
+// Fill the fader below its thumb (Firefox does this natively).
+const volume = $<HTMLInputElement>("volume");
+const paintVolume = () => volume.style.setProperty("--fill", `${Number(volume.value) * 100}%`);
+volume.addEventListener("input", paintVolume);
+paintVolume();
 
 $("skip").addEventListener("click", () => {
   practice?.advance();
