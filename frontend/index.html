@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Piano Lo-Key</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎹</text></svg>" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Piano <span>Lo-Key</span></h1>
+      <p class="tagline">Turn any song into a beginner piano lesson.</p>
+    </header>
+
+    <main>
+      <section id="load" class="card">
+        <h2>Pick a song</h2>
+        <form id="youtube-form">
+          <label for="youtube-url">YouTube link</label>
+          <div class="row">
+            <input id="youtube-url" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" required />
+            <button type="submit">Analyze</button>
+          </div>
+        </form>
+        <div class="alt">
+          <label class="file-button">
+            Upload an audio file
+            <input id="upload" type="file" accept="audio/*" hidden />
+          </label>
+          <span>or</span>
+          <button id="demo" class="link" type="button">try the demo song</button>
+        </div>
+        <div id="status" class="status" hidden>
+          <ol id="steps">
+            <li data-step="downloading">Getting audio</li>
+            <li data-step="transcribing">Listening for notes</li>
+            <li data-step="arranging">Simplifying for piano</li>
+          </ol>
+          <p id="status-text"></p>
+        </div>
+      </section>
+
+      <section id="lesson" class="card" hidden>
+        <div class="lesson-head">
+          <h2 id="lesson-title"></h2>
+          <span id="lesson-meta" class="meta"></span>
+        </div>
+        <div id="levels" class="levels" role="radiogroup" aria-label="Difficulty"></div>
+        <p id="level-desc" class="meta"></p>
+
+        <div class="now">
+          <div>
+            <span class="meta">Chord</span>
+            <strong id="chord">–</strong>
+          </div>
+          <div>
+            <span class="meta">Play</span>
+            <strong id="play-names">–</strong>
+          </div>
+          <div>
+            <span class="meta">Progress</span>
+            <strong id="progress">0 / 0</strong>
+          </div>
+        </div>
+        <div class="bar"><div id="bar-fill"></div></div>
+
+        <div id="keyboard" class="keyboard-wrap"></div>
+        <div class="legend">
+          <span><i class="sw right"></i>Right hand</span>
+          <span><i class="sw left"></i>Left hand</span>
+          <span><i class="sw next"></i>Coming up</span>
+          <span><i class="sw heard"></i>Heard</span>
+        </div>
+
+        <div class="controls">
+          <button id="listen" type="button">🎤 Start listening</button>
+          <button id="midi" type="button" class="secondary" hidden>🎹 Use MIDI keyboard</button>
+          <button id="hint" type="button" class="secondary">🔊 Hear it</button>
+          <button id="back" type="button" class="secondary">◀ Back</button>
+          <button id="skip" type="button" class="secondary">Skip ▶</button>
+          <button id="restart" type="button" class="secondary">Restart</button>
+        </div>
+        <p id="listen-status" class="meta"></p>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

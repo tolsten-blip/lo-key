@@ -1,0 +1,33 @@
+import type { Job } from "./types";
+
+async function request(path: string, init?: RequestInit): Promise<Job> {
+  const res = await fetch(path, init);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.detail ?? `Request failed (${res.status})`);
+  return body as Job;
+}
+
+export function submitYouTube(url: string): Promise<Job> {
+  return request("/api/jobs/youtube", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }),
+  });
+}
+
+export function submitUpload(file: File): Promise<Job> {
+  const form = new FormData();
+  form.append("file", file);
+  return request("/api/jobs/upload", { method: "POST", body: form });
+}
+
+/** Poll a job until it finishes, reporting each status change. */
+export async function waitForJob(job: Job, onUpdate: (job: Job) => void, intervalMs = 1500): Promise<Job> {
+  onUpdate(job);
+  while (job.status !== "done" && job.status !== "error") {
+    await new Promise((r) => setTimeout(r, intervalMs));
+    job = await request(`/api/jobs/${job.id}`);
+    onUpdate(job);
+  }
+  return job;
+}
