@@ -13,8 +13,8 @@ const TOP = 52; // y of the treble staff's top line (F5)
 const STAVES_APART = 72; // treble bottom line to bass top line
 const CLEF_W = 58;
 const COL_W = 46;
-const BEHIND = 1; // past steps shown (faded)
-const MAX_AHEAD = 7; // upcoming steps shown on a wide screen
+const MIN_COLUMNS = 5; // steps per page on a phone
+const MAX_COLUMNS = 9; // steps per page on a wide screen
 
 // Letter (C=0 … B=6) and accidental for each pitch class, spelled like the app's note names.
 const SPELLING: [number, "" | "♯" | "♭"][] = [
@@ -71,12 +71,14 @@ export class Staff {
 
   /** Draw the steps around `index`. `heard` marks notes being played right now. */
   render(steps: Step[], index: number, heard: Set<number>, secondsPerBar: number) {
-    // Show fewer steps on narrow screens so the notes stay a readable size.
+    // Like a printed page: the notes stay put while the highlight moves across,
+    // then the page turns. Fewer steps per page on narrow screens keep notes readable.
     const available = this.svg.parentElement?.clientWidth || 640;
-    const ahead = Math.max(3, Math.min(MAX_AHEAD, Math.floor((available - 70) / 52) - BEHIND - 1));
-    const first = Math.max(0, index - BEHIND);
-    const shown = steps.slice(first, index + ahead + 1);
-    const width = CLEF_W + (BEHIND + ahead + 1) * COL_W + 12;
+    const columns = Math.max(MIN_COLUMNS, Math.min(MAX_COLUMNS, Math.floor((available - 70) / 52)));
+    const onPage = Math.min(index, Math.max(steps.length - 1, 0)); // when finished, stay on the last page
+    const first = Math.floor(onPage / columns) * columns;
+    const shown = steps.slice(first, first + columns);
+    const width = CLEF_W + columns * COL_W + 12;
     const height = bassY(10) + 4;
     this.svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     this.svg.setAttribute("aria-label", steps[index] ? `Play ${steps[index].notes.length} note(s)` : "Song finished");
