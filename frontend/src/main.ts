@@ -10,11 +10,15 @@ import type { Hand, Lesson, Level } from "./types";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-const keyboard = new Keyboard($("keyboard"));
+const keyboard = new Keyboard($("keyboard"), onKeyPress);
 let lesson: Lesson | undefined;
 let practice: Practice | undefined;
 let source: NoteSource | undefined;
 let heard = new Set<number>();
+/** Latest notes from the mic or MIDI keyboard. */
+let sourceFrame = new Map<number, number>();
+/** Correct keys tapped on screen for the current step; they stay down until it's complete. */
+const tapped = new Set<number>();
 
 // ---- Loading a song -------------------------------------------------------
 
@@ -145,9 +149,9 @@ function selectLevel(index: number) {
   $("level-name").textContent = level.name;
   $("level-desc").textContent = level.description;
 
-  const fresh = new Practice(buildSteps(level.notes));
-  if (practice) fresh.framesRequired = practice.framesRequired;
-  practice = fresh;
+  tapped.clear();
+  practice = new Practice(buildSteps(level.notes));
+  practice.framesRequired = source instanceof MicListener ? 3 : 1;
 
   const pitches = level.notes.map((n) => n.pitch);
   keyboard.setRange(Math.min(...pitches, 60), Math.max(...pitches, 72));
@@ -202,15 +206,44 @@ function render() {
 }
 
 function onHeard(frame: Map<number, number>) {
+  sourceFrame = frame;
+  feed();
+}
+
+/** Combine what the mic/MIDI hears with on-screen taps, and let practice react. */
+function feed() {
   if (!practice) return;
+  const frame = new Map(sourceFrame);
+  for (const pitch of tapped) frame.set(pitch, 40);
   heard = new Set(frame.keys());
   const advanced = practice.hear(frame);
+  if (advanced) {
+    // Lift the tapped keys so a repeated note needs a fresh tap.
+    tapped.clear();
+    practice.hear(new Map(sourceFrame));
+    heard = new Set(sourceFrame.keys());
+  }
   // Only redraw when something visible changed, not on every audio frame.
   const key = [...heard].sort().join(",");
   if (advanced || key !== lastHeardKey) render();
   lastHeardKey = key;
 }
 let lastHeardKey = "";
+
+function onKeyPress(midi: number) {
+  // Our own note coming out of the speaker shouldn't count as the student playing.
+  if (source instanceof MicListener) source.mute(700);
+  playNotes([midi], Number($<HTMLInputElement>("volume").value), 0.8);
+
+  const step = practice?.current;
+  if (!step) return;
+  if (!step.notes.some((n) => n.pitch === midi)) {
+    keyboard.flash(midi, "wrong");
+    return;
+  }
+  tapped.add(midi);
+  feed();
+}
 
 // ---- Input switch: MIC / MIDI, like a radio's AM/FM ------------------------
 
@@ -220,11 +253,15 @@ function setSwitch(active: "mic" | "midi" | null, status: string) {
   $("listen-status").textContent = status;
 }
 
+const IDLE_STATUS = "Press MIC to start listening, or tap the keys.";
+
 function stopListening() {
   source?.stop();
   source = undefined;
   heard = new Set();
-  setSwitch(null, "Press MIC to start listening.");
+  sourceFrame = new Map();
+  if (practice) practice.framesRequired = 1;
+  setSwitch(null, IDLE_STATUS);
   render();
 }
 
@@ -277,16 +314,19 @@ volume.addEventListener("input", paintVolume);
 paintVolume();
 
 $("skip").addEventListener("click", () => {
+  tapped.clear();
   practice?.advance();
   render();
 });
 
 $("back").addEventListener("click", () => {
+  tapped.clear();
   practice?.back();
   render();
 });
 
 $("restart").addEventListener("click", () => {
+  tapped.clear();
   practice?.restart();
   render();
 });

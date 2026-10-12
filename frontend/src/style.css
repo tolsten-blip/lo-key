@@ -460,6 +460,16 @@ button.link {
   transition: fill 0.08s;
 }
 
+.keyboard {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.key {
+  cursor: pointer;
+}
+
 .key.white {
   fill: var(--key-white);
 }
@@ -487,6 +497,14 @@ button.link {
 
 .key.heard {
   fill: var(--heard);
+}
+
+.key.pressed {
+  filter: brightness(0.88);
+}
+
+.key.wrong {
+  fill: var(--error);
 }
 
 .key-label {

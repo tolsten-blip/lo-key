@@ -16,15 +16,37 @@ export interface KeyState {
   heard: Set<number>;
 }
 
-/** An overhead piano keyboard drawn as SVG. */
+/** An overhead piano keyboard drawn as SVG. Keys can be pressed with a mouse or finger. */
 export class Keyboard {
   private keys = new Map<number, { rect: SVGRectElement; label: SVGTextElement }>();
   private svg: SVGSVGElement;
 
-  constructor(private container: HTMLElement) {
+  constructor(
+    private container: HTMLElement,
+    onPress: (midi: number) => void,
+  ) {
     this.svg = document.createElementNS(SVG, "svg");
     this.svg.classList.add("keyboard");
     container.replaceChildren(this.svg);
+
+    this.svg.addEventListener("pointerdown", (e) => {
+      const midi = Number((e.target as Element).getAttribute("data-midi"));
+      if (!midi || e.button > 0) return;
+      (e.target as Element).classList.add("pressed");
+      onPress(midi);
+    });
+    const release = (e: PointerEvent) => (e.target as Element).classList?.remove("pressed");
+    for (const type of ["pointerup", "pointerleave", "pointercancel", "pointerout"] as const) {
+      this.svg.addEventListener(type, release);
+    }
+  }
+
+  /** Briefly mark a key, e.g. red for a wrong note. */
+  flash(midi: number, className: string, ms = 300) {
+    const rect = this.keys.get(midi)?.rect;
+    if (!rect) return;
+    rect.classList.add(className);
+    setTimeout(() => rect.classList.remove(className), ms);
   }
 
   /** Draw keys covering ``low``..``high``, widened to whole octaves and at least two of them. */
@@ -47,6 +69,7 @@ export class Keyboard {
       rect.setAttribute("width", String(w));
       rect.setAttribute("height", String(h));
       rect.setAttribute("rx", "3");
+      rect.setAttribute("data-midi", String(midi));
       rect.classList.add("key", black ? "black" : "white");
 
       const label = document.createElementNS(SVG, "text");

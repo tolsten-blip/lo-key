@@ -40,6 +40,9 @@ YouTube link ──► server ──► Basic Pitch ──► arranger ──►
   pitch detection. It ignores overtones and the energy a loud note spills
   into neighbouring frequencies.
 - **MIDI keyboard** support, where the browser has Web MIDI. It's exact.
+- **Tap or click the on-screen keys** to play without a mic. Correct keys stay
+  down until the step is complete, so chords can be tapped one key at a time;
+  a wrong key flashes red.
 - **🔊 Hear it** plays the current notes, and a built-in demo song lets you
   try practice mode straight away.
 
