@@ -34,8 +34,9 @@ YouTube link ──► server ──► Basic Pitch ──► arranger ──►
   the faint keys are coming up next, and keys turn green when they're heard.
 - **Keys / Notes switch:** show the lesson on a grand staff instead of the
   keyboard, with the same colours, for sight-reading practice. Notes are
-  shown as noteheads in order (without rhythm values). Like a printed page,
-  the notes stay still while the highlight moves across, then the page turns.
+  shown as noteheads in order (without rhythm values), four measures per
+  page. Like a printed page, the notes stay still while the highlight moves
+  across, then the page turns.
 - **Wait-for-me practice:** the lesson moves on only once every note in the
   current step has been heard. A note has to be struck again to count twice,
   so C-C-C really needs three presses.

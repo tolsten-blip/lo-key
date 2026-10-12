@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ledgerLines, staffPosition } from "./staff";
+import type { Step } from "./music";
+import { layoutPage, ledgerLines, staffPosition } from "./staff";
 
 describe("staffPosition", () => {
   it("places notes on the right line or space", () => {
@@ -33,5 +34,39 @@ describe("ledgerLines", () => {
     expect(ledgerLines(42, "R")).toEqual([40, 42]); // C6
     expect(ledgerLines(14, "L")).toEqual([16, 14]); // C2
     expect(ledgerLines(29, "L")).toEqual([28]); // D4 written in the bass
+  });
+});
+
+describe("layoutPage", () => {
+  // 120 BPM: a bar of 4/4 lasts 2 seconds. One step per beat for 6 bars.
+  const steps: Step[] = Array.from({ length: 24 }, (_, i) => ({ time: i * 0.5, notes: [{ pitch: 60, start: i * 0.5, duration: 0.5, hand: "R" as const }] }));
+  const pageOf = (index: number) => layoutPage(steps, index, 2).measures.flatMap((m) => m.steps.map((s) => s.index));
+
+  it("shows four measures per page", () => {
+    const page = layoutPage(steps, 0, 2);
+    expect(page.measures).toHaveLength(4);
+    expect(page.measures.map((m) => m.steps.length)).toEqual([4, 4, 4, 4]);
+  });
+
+  it("keeps the page still until the next four measures begin", () => {
+    expect(pageOf(0)).toEqual(pageOf(15));
+    expect(pageOf(16)[0]).toBe(16);
+    expect(pageOf(16)).toEqual([16, 17, 18, 19, 20, 21, 22, 23]); // last page: two bars of music, two empty
+  });
+
+  it("stays on the last page once the song is finished", () => {
+    expect(pageOf(24)).toEqual(pageOf(23));
+  });
+
+  it("spaces notes evenly inside each measure, in order", () => {
+    const xs = layoutPage(steps, 0, 2).measures.flatMap((m) => m.steps.map((s) => s.x));
+    xs.slice(1).forEach((x, i) => expect(x).toBeGreaterThan(xs[i]));
+  });
+
+  it("gives busy measures more room", () => {
+    const busy: Step[] = Array.from({ length: 12 }, (_, i) => ({ time: i * 0.15, notes: [{ pitch: 60, start: i * 0.15, duration: 0.1, hand: "R" as const }] }));
+    const [first, second] = layoutPage(busy, 0, 2).measures;
+    expect(first.steps).toHaveLength(12);
+    expect(first.width).toBeGreaterThan(second.width);
   });
 });

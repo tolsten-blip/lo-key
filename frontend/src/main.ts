@@ -195,9 +195,6 @@ function setView(staffView: boolean) {
   render();
 }
 
-// The staff picks how many steps fit, so redraw it when the window changes size.
-addEventListener("resize", () => showingStaff && render());
-
 $("view-keys").addEventListener("click", () => setView(false));
 $("view-staff").addEventListener("click", () => setView(true));
 try {
