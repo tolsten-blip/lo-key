@@ -1,9 +1,13 @@
 import type { Job } from "./types";
 
+const UNREACHABLE = "Can't reach the song analyzer. Make sure the server is running (bash scripts/start.sh).";
+
 async function request(path: string, init?: RequestInit): Promise<Job> {
-  const res = await fetch(path, init);
+  const res = await fetch(path, init).catch(() => {
+    throw new Error(UNREACHABLE);
+  });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.detail ?? `Request failed (${res.status})`);
+  if (!res.ok) throw new Error(body.detail ?? (res.status >= 500 || res.status === 404 ? UNREACHABLE : `Request failed (${res.status})`));
   return body as Job;
 }
 

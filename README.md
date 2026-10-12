@@ -1,5 +1,9 @@
 # Piano Lo-Key
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tolsten-blip/lo-key?quickstart=1)
+
+**Try the demo on your phone:** https://tolsten-blip.github.io/lo-key/ (demo song only)
+
 Turn a song into a beginner piano lesson. Paste a YouTube link (or upload an
 audio file), and Piano Lo-Key works out the melody and chords, builds a few
 difficulty levels, and then teaches it to you on an on-screen keyboard. It
@@ -45,25 +49,38 @@ YouTube link ──► yt-dlp ──► Basic Pitch ──► arranger ──►
 - **🔊 Hear it** plays the current notes. A demo song works without the
   backend.
 
-## Running it
+## Opening the app
 
-Requires Python **3.10 or 3.11** (Basic Pitch doesn't support 3.12+ yet),
-Node 18+, and `ffmpeg` on your PATH.
+### In your browser, with nothing to install (recommended)
+
+Click **Open in GitHub Codespaces** above, then **Create codespace**. The
+first launch takes about 5 minutes while it installs everything; after that,
+the app opens in a new browser tab by itself. If the tab doesn't open, go to
+the **Ports** tab at the bottom of the editor and click the 🌐 globe next to
+"Piano Lo-Key".
+
+To come back later, open https://github.com/codespaces and pick your
+codespace. It starts in seconds. Codespaces shut down by themselves after 30
+minutes of inactivity, so you aren't charged for idle time. Personal accounts
+include free hours each month.
+
+### Demo only, on any device
+
+https://tolsten-blip.github.io/lo-key/ has the demo song and mic practice,
+but can't analyze new songs, since that needs the Python server.
+
+### On your own computer
+
+You need Python **3.10 or 3.11** (Basic Pitch doesn't support 3.12+ yet),
+Node 18+, and `ffmpeg`.
 
 ```bash
-# Backend
-python3.11 -m venv .venv
-.venv/bin/pip install -r backend/requirements.txt
-cd backend && ../.venv/bin/uvicorn lokey.app:app --reload --port 8000
-
-# Frontend (in another terminal)
-cd frontend && npm install && npm run dev
+bash scripts/start.sh   # installs everything on first run, then starts the app
 ```
 
-Open http://localhost:5173. To use the mic from a phone on the same network,
-run `npm run dev -- --host`. Phone browsers only allow the microphone over
-HTTPS (or on localhost), so you'll need a tunnel such as `ngrok` or
-`cloudflared`.
+Open http://localhost:5173. Phone browsers only allow the microphone over
+HTTPS (or on localhost), so to practice on a phone, use Codespaces or a
+tunnel such as `ngrok`.
 
 ### Tests
 

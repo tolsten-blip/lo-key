@@ -142,6 +142,22 @@ button.link {
   text-decoration: underline;
 }
 
+.note {
+  margin: 0 0 4px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.note a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+[hidden] {
+  display: none !important;
+}
+
 .alt {
   display: flex;
   align-items: center;

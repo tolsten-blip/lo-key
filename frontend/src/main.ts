@@ -78,6 +78,14 @@ $("demo").addEventListener("click", () => {
   openLesson(DEMO_LESSON);
 });
 
+if (import.meta.env.VITE_DEMO_ONLY === "true") {
+  $("demo-only-note").hidden = false;
+  $("youtube-form").hidden = true;
+  document.querySelectorAll<HTMLElement>(".file-button, .alt > span").forEach((el) => (el.hidden = true));
+  $("demo").textContent = "Start the demo song";
+  $("demo").classList.remove("link");
+}
+
 // ---- Lesson & practice ----------------------------------------------------
 
 function openLesson(l: Lesson) {
